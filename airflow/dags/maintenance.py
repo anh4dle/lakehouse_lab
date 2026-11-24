@@ -14,10 +14,8 @@ OPTIMIZE_FILE_SIZE_THRESHOLD = "128MB"
 
 TARGET_TABLES = [
     "iceberg.bronze.fact_customer_events",
-    # "iceberg.ops.quarantine_dlq",
     # "iceberg.silver.dim_customers",
     # "iceberg.gold.<your_gold_table>",
-    # "iceberg.ops.<your_registry_table>",
 ]
 
 default_args = {
@@ -57,18 +55,7 @@ with DAG(
                 ),
             )
 
-            # Step 2: drop old snapshots so replaced files are no longer referenced.
-            expire_snapshots = SQLExecuteQueryOperator(
-                task_id="expire_snapshots",
-                conn_id=TRINO_CONN_ID,
-                autocommit=True,
-                sql=(
-                    f"ALTER TABLE {table} EXECUTE expire_snapshots"
-                    f"(retention_threshold => '{EXPIRE_RETENTION}')"
-                ),
-            )
-
-            # Step 3: delete files that no snapshot or metadata file references.
+            # Step 2: delete files that no snapshot or metadata file references.
             # Keep the retention longer than your longest-running write job.
             remove_orphans = SQLExecuteQueryOperator(
                 task_id="remove_orphan_files",
@@ -80,4 +67,4 @@ with DAG(
                 ),
             )
 
-            compact >> expire_snapshots >> remove_orphans
+            compact >> remove_orphans

@@ -2,7 +2,7 @@
 - A containerized data lakehouse built with Apache Spark, Apache Iceberg, MinIO (S3-compatible storage), Apache Airflow, and Pandera data contracts. This repository serves as a template and Proof-of-Concept (POC) for data engineering pipelines following the Medallion architecture pattern.
 
 ## Architecture:
-![Screenshot of the app](./architecture.png)
+![Screenshot of the app](./imgs/architecture.png)
 
 
 ## Medallion Layers:
