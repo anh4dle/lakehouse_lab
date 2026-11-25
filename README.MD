@@ -17,6 +17,7 @@
 - Idempotent Upserts: Implements Iceberg MERGE INTO operations to guarantee safe retries and prevent data duplication.
 - Containerized Infrastructure: Fully orchestrated via Docker Compose, including Airflow, Spark Master/Worker nodes, MinIO storage, and an Iceberg REST.
 - Iceberg maintainence: merge small files, set expiring snapshots policy and remove orphan files.
+- Stream processing: ingest and process update events from operational database to analytical database and feaeture store.
 ## Project Structure
 ```text
 lakehouse_lab/
