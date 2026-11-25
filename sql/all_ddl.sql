@@ -129,8 +129,6 @@ CREATE TABLE IF NOT EXISTS iceberg.ops.quarantine_dlq (
 )
 USING iceberg;
 
-
-
 CREATE TABLE sku_inventory (
     sku_id VARCHAR(20) PRIMARY KEY,
     product_name VARCHAR(100) NOT NULL,

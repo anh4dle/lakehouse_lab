@@ -5,7 +5,7 @@ from pyspark.sql import functions as F
 from typing import Optional
 from pyspark.sql import DataFrame
 from pyspark.sql.functions import col, lit, to_timestamp
-from typing import List, Union
+from typing import List, Union, StringType
 from pyspark.sql.functions import (
     to_date,
 )

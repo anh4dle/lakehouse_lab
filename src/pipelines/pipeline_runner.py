@@ -1,6 +1,7 @@
 # src/engine/pipeline_runner.py
 from datetime import timedelta
-from pyspark.sql.functions import lit, current_timestamp
+from pyspark.sql import functions as F
+from pyspark.sql.types import StringType
 from src.utils.spark_io import (
     read_new_data,
     write_to_iceberg,
@@ -149,28 +150,36 @@ class LakehousePipelineRunner:
             raise
 
     def write_quarantine_rows(self, df_quarantine, pipeline_name, primary_keys):
-        quarantine_count = 0
+        if df_quarantine is None:
+            return
 
-        if df_quarantine is not None:
-            quarantine_count = df_quarantine.count()
+        dlq_df = (
+            df_quarantine.withColumn(
+                "pipeline_string", F.lit(pipeline_name).cast(StringType())
+            )
+            .withColumn("raw_payload", F.to_json(F.struct(*df_quarantine.columns)))
+            .withColumn(
+                "_error_reason", F.lit("Data Validation Failure").cast(StringType())
+            )
+            .withColumn("_quarantine_timestamp", F.current_timestamp())
+            .select(
+                "pipeline_string",
+                "raw_payload",
+                "_error_reason",
+                "_quarantine_timestamp",
+            )
+        )
 
-        # Write malformed rows to quarantine table
+        quarantine_count = dlq_df.count()
+
         if quarantine_count > 0:
             logger.warning(
                 "Found %d malformed rows for pipeline %s. Routing to DLQ.",
                 quarantine_count,
                 pipeline_name,
             )
+            dlq_df.writeTo("iceberg.ops.quarantine_dlq").append()
 
-            quarantine_with_meta = df_quarantine.withColumn(
-                "_error_reason", lit("Data Validation Failure")
-            ).withColumn("_quarantine_timestamp", current_timestamp())
-
-            write_to_iceberg(
-                df=quarantine_with_meta,
-                table_name="iceberg.ops.quarantine_dlq",
-                primary_keys=primary_keys,
-            )
             logger.info(
                 "Successfully inserted %d rows to quarantine table", quarantine_count
             )
